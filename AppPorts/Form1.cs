@@ -39,7 +39,6 @@ namespace AppPorts
         double acumulador=0;
         Boolean off_on=false;
         private OpenFileDialog openFileDialog;
-        //
 
         private void btnUpdateSaved_Click(object sender, EventArgs e)
         {
@@ -49,7 +48,6 @@ namespace AppPorts
                 if (estado)
                 {
                     btnUpdateSaved.Text = "Guardar";
-
                 }
                 else
                 {
@@ -88,9 +86,6 @@ namespace AppPorts
             btnUpdateSaved.Enabled = false;
             estado = false;
             activarCajas();
-            //txtHistorial.Text = "Diego: Hola\r\n\r\nJose: Hola Diego";
-            //Control.CheckForIllegalCrossThreadCalls = false;
-
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -112,10 +107,6 @@ namespace AppPorts
             txtReceived.Text = puertoX.getReceivedBytesThreshold().ToString();
         }
 
-        private void textBox1_TextChanged(object sender, EventArgs e)
-        {
-            
-        }
 
         private void button3_Click(object sender, EventArgs e)
         {
@@ -228,10 +219,6 @@ namespace AppPorts
             historial = "";
         }
 
-        private void button4_Click_1(object sender, EventArgs e)
-        {
-            
-        }
 
         public void limpiarBarra()
         {
@@ -246,14 +233,9 @@ namespace AppPorts
 
         private void button5_Click(object sender, EventArgs e)
         {
-            puertoX.iniciarArchivos();
             limpiarBarra();
             puertoX.confirmarEnvio();
 
-        }
-
-        private void button6_Click(object sender, EventArgs e)
-        {
         }
 
         public int buscarPuerto()
@@ -267,13 +249,6 @@ namespace AppPorts
             }
             return -1;
         }
-
-        //private void puertoC_LlegoMensaje(Object oo, string ss)
-        //{
-        //    //MessageBox.Show(ss);
-        //    historial += "\r\n" + "Stefany: " + ss;
-        //    this.txtHistorial.Text = historial;
-        //}
 
         private void puertoC_LlegoMensaje(Object oo, string ss)
         {
@@ -345,12 +320,6 @@ namespace AppPorts
 
         }
 
-        private void button4_Click_2(object sender, EventArgs e)
-        {
-
-            
-        }
-
         private void puertoC_LlegoAprobacion(Object oo)
         {
             if (InvokeRequired)
@@ -386,6 +355,7 @@ namespace AppPorts
              
             }
         }
+
         private void puertoC_LlegoCarpeta(Object oo, int size, int number, string extension)
         {
             if (InvokeRequired)
@@ -434,13 +404,11 @@ namespace AppPorts
 
 
 
-            public void actualizarPorts()
+        public void actualizarPorts()
         {
             cbxNamePorts.Items.Clear();
             namePuertos = SerialPort.GetPortNames();
             listPuertos = new ClassSerialPort[namePuertos.Length];
-            //MessageBox.Show(namePuertos.Length.ToString());
-            //Llenamos el combox con los nombres de los puertos com existentes.
             for (int i = 0; i < namePuertos.Length; i++)
             {
                 cbxNamePorts.Items.Add(namePuertos[i]);

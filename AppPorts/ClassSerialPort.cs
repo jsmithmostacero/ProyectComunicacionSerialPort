@@ -129,22 +129,11 @@ namespace AppPort
             serialPort.Open();
         }
 
-        public void iniciarArchivos()
-        {
-            bufferExitEmpty = true;
-            processVerifyExit = new Thread(VerifyExit);
-            processVerifyExit.Start();
-            fileSend = new ClassFile();
-            fileReption = new ClassFile();
-        }
-
-
         public void finalizarSendObject()
         {
             bufferExitEmpty = false;
             processVerifyExit.Abort();
             fileSend = null;
-            fileReption = null;
             readingFile.Close();
             flowFileToSend.Close(); 
             processSendFile.Abort();
@@ -153,13 +142,22 @@ namespace AppPort
 
         public void finalizarReceptionObject()
         {
-            bufferExitEmpty = false;
-            processVerifyExit.Abort();
-            fileSend = null;
             fileReption = null;
             flowFileToReption.Close();
             writeingFile.Close();
 
+        }
+
+        public void creationToFile(string name, long size, int idNumber)
+        {
+
+            fileReption= new ClassFile();
+            flowFileToReption = new FileStream(name, FileMode.Create, FileAccess.Write);
+            writeingFile = new BinaryWriter(flowFileToReption);
+            fileReption.name = Path.GetFileName(name);
+            fileReption.number = idNumber;
+            fileReption.size = size;
+            fileReption.advance = 0;
         }
 
         public void confirmarEnvio()
@@ -210,52 +208,54 @@ namespace AppPort
 
         }
 
-        public void enviarTareaCreacionArchivo()
-        {
-            long size;
-            int number;
-            String ceros = "", extension = "", aux1 = "", aux2 = "";
-            tramaCabecera = ASCIIEncoding.UTF8.GetBytes("C");
-            size = fileSend.size;
-            extension = Path.GetExtension(fileSend.path);
-            number = fileSend.number;
-            aux1 = size.ToString();
-            for (int i = 0; i < 9 - aux1.Length; i++)
-            {
-                ceros = ceros + "0";
-            }
-            aux1 = ceros + aux1;
-
-            aux2 = number.ToString();
-            ceros = "";
-            for (int i = 0; i < 2 - aux2.Length; i++)
-            {
-                ceros = ceros + "0";
-            }
-            aux2 = ceros + aux2;
-
-            ceros = "";
-            for (int i = 0; i < 8 - extension.Length; i++)
-            {
-                ceros = ceros + "@";
-            }
-            extension += ceros;
-
-            tramaCabecera = ASCIIEncoding.UTF8.GetBytes("C" + aux1 + aux2 + extension);
-            serialPort.Write(tramaCabecera, 0, 20);
-            serialPort.Write(arregloTramaRelleno, 0, 1004);
-
-        }
-
         public void IniciadoEnvioArchivo(String name, String path)
         {
+
+            bufferExitEmpty = true;//
+            processVerifyExit = new Thread(VerifyExit);//
+            processVerifyExit.Start();//
 
             flowFileToSend = new FileStream(path, FileMode.Open, FileAccess.Read);
             readingFile = new BinaryReader(flowFileToSend);
             fileSend = new ClassFile(1, name, path, flowFileToSend.Length, 0, true);
             enviarTareaCreacionArchivo();
-            
         }
+
+        public void enviarTareaCreacionArchivo()
+        {
+            //Para la creación del archivo se debe enviar una trama con la tarea C
+            //y enviar la información del archivo en la cabecera de la trama, como
+            //TAREA+TAMAÑO+NÚMERO+EXTENSIÓN -> tener en cuenta que la cabecera debe
+            //ocupar 20 bytes, de otra forma debe complementar los 20 con algún relleno.
+
+            long sizeFile;
+            int number;
+            String relleno = "", extension = "", textoSizeFile = "";
+
+            sizeFile = fileSend.size;
+            extension = Path.GetExtension(fileSend.path);
+            number = fileSend.number;
+            textoSizeFile = sizeFile.ToString();
+
+            for (int i = 0; i < 9 - textoSizeFile.Length; i++)
+            {
+                relleno = relleno + "0";
+            }
+            textoSizeFile = relleno + textoSizeFile;
+
+            relleno = "";
+            for (int i = 0; i < 8 - extension.Length; i++)
+            {
+                relleno = relleno + "@";
+            }
+            extension += relleno;
+
+            tramaCabecera = ASCIIEncoding.UTF8.GetBytes("C" + textoSizeFile + "01" + extension);
+            serialPort.Write(tramaCabecera, 0, 20);
+            serialPort.Write(arregloTramaRelleno, 0, 1004);
+
+        }
+
 
         public void enviandoArchivo()
         {
@@ -296,7 +296,7 @@ namespace AppPort
             serialPort.Write(arregloTramaRelleno, 0, 1004 - tamanito);
             Console.WriteLine(v = v + tamanito);
             OnLlegoBarra("Enviando",fileSend.size);
-            MessageBox.Show("Se envío el archivo correctamente");
+            MessageBox.Show("Se envío el archivo "+fileSend.name+" correctamente");
             finalizarSendObject();
             //trama para cerrar procesos.
         }
@@ -346,85 +346,12 @@ namespace AppPort
             }
         }
 
-        private void sPuerto_DataReceived(object o, SerialDataReceivedEventArgs s)
-        {
-
-
-            if (serialPort.BytesToRead >= getReceivedBytesThreshold())
-            {
-                //Extraer la trama que ha llegado
-                serialPort.Read(tramaRecibida, 0, getReceivedBytesThreshold());
-
-                string TAREA = ASCIIEncoding.UTF8.GetString(tramaRecibida, 0, 1);
-
-                switch (TAREA)
-                {
-                    case "M":
-                        int longValRec = getReceivedBytesThreshold();
-                        // Número de caracteres escritos
-                        int cantCaracter = Int32.Parse(ASCIIEncoding.UTF8.GetString(tramaRecibida, 1, 19));
-                        mensajeRecibido = ASCIIEncoding.UTF8.GetString(tramaRecibida, 20, cantCaracter);
-                        OnLlegoMensaje(mensajeRecibido);
-                        break;
-                    case "S":
-                        DialogResult result = MessageBox.Show("¿Confirmar Archivo?", "Confirmación", MessageBoxButtons.YesNo);
-
-                        if (result == DialogResult.Yes)
-                        {
-                            //Se crea en la recepción el archivo
-                            //se envía una trama con la validación de confirmación
-                            //para que se envíe en la trama la info
-                            confirmarPeticionCrearArchivo();
-                        }
-                        else if (result == DialogResult.No)
-                        {
-                            //No se hace nada
-                            denegarPeticionCrearArchivo();
-                        }
-                        break;
-                    case "1":
-                        MessageBox.Show("El receptor acepto el archivo");
-                        OnLlegoAprobacion();
-                        break;
-                    //enviarSolicitud 
-                    case "0":
-                        MessageBox.Show("El receptor no acepto el archivo");
-                        //this.verify = false;
-                        break;
-                    case "C":
-                        //data
-                        iniciarArchivos();
-                        string extensionConEspacios = ASCIIEncoding.UTF8.GetString(tramaRecibida, 12, 8);
-                        string extension = extensionConEspacios.Replace("@", "");
-                        int size = Int32.Parse(ASCIIEncoding.UTF8.GetString(tramaRecibida, 1, 9));
-                        int number = Int32.Parse(ASCIIEncoding.UTF8.GetString(tramaRecibida, 10, 2));
-                        OnLlegoCarpeta(size, number,extension);
-                        break;
-                    case "G":
-                        enviandoArchivo();
-                        break;
-                    case "A":
-                        buildingFile();
-                        break;
-                    case "F":
-                       // MessageBox.Show("Trama para cerra Flujos");
-                        finalizarSendObject();
-                        break;
-                    default:
-                        MessageBox.Show("TAREA NO RECONOCIDA");
-                        break;
-                }
-
-            }
-        }
-
         private void buildingFile()
         {
-            // debe realizarse en funcion del tamaño 1019 y la ultima será tamanito
+            // debe realizarse en funcion del tamaño 1004 y la ultima será tamanito
 
             try
             {
-                
                 OnLlegoBarra("Recibiendo", fileReption.size);
                 if (fileReption.advance <= fileReption.size - 1004)
                 {
@@ -435,12 +362,11 @@ namespace AppPort
                 {
                     int tamanito = Convert.ToInt16(fileReption.size - fileReption.advance);
                     writeingFile.Write(tramaRecibida, 20, tamanito);
-                    //writeingFile.Close();
-                    //flowFileToReption.Close();
+                    MessageBox.Show("Se recibió correctamente el archivo " + fileReption.name);
                     finalizarReceptionObject();
-                    cerrarFlujos();
-                    
-                    MessageBox.Show("Se recibió correctamente el archivo");
+                    //tambien debo señalar al transmisor
+                    //cerrarFlujos();
+
 
                 }
 
@@ -452,15 +378,88 @@ namespace AppPort
 
         }
 
-        public void creationToFile(string name, long size, int idNumber)
+        private void sPuerto_DataReceived(object o, SerialDataReceivedEventArgs s)
         {
-            flowFileToReption = new FileStream(name, FileMode.Create, FileAccess.Write);
-            
-            writeingFile = new BinaryWriter(flowFileToReption);
-            fileReption.name = name;
-            fileReption.number = idNumber;
-            fileReption.size = size;
-            fileReption.advance = 0;
+
+
+            if (serialPort.BytesToRead >= getReceivedBytesThreshold())
+            {
+                //Extraer toda la trama que ha llegado
+                serialPort.Read(tramaRecibida, 0, getReceivedBytesThreshold());
+                //Extraer el primer byte de la trama
+                string TAREA = ASCIIEncoding.UTF8.GetString(tramaRecibida, 0, 1);
+                //Realizo una tarea según el primer byte
+                switch (TAREA)
+                {
+                    //La tarea es la contrucción de un mensaje.
+                    case "M":
+                        int longValRec = getReceivedBytesThreshold();
+                        // Número de caracteres escritos
+                        int cantCaracter = Int32.Parse(ASCIIEncoding.UTF8.GetString(tramaRecibida, 1, 19));
+                        mensajeRecibido = ASCIIEncoding.UTF8.GetString(tramaRecibida, 20, cantCaracter);
+                        OnLlegoMensaje(mensajeRecibido);
+                        break;
+                    
+                    //La tarea es la pregunta de confirmación para acpetar o no el archivo
+                    case "S":
+                        DialogResult result = MessageBox.Show("¿Confirmar Archivo?", "Confirmación", MessageBoxButtons.YesNo);
+
+                        if (result == DialogResult.Yes)
+                        {
+                            //Se envía al transmisor una trama, y el primer byte = 1
+                            //de confirmación
+                            confirmarPeticionCrearArchivo();
+                        }
+                        else if (result == DialogResult.No)
+                        {
+                            //Se envía al transmisor una trama, y el primer byte = 0
+                            //de no confirmación
+                            denegarPeticionCrearArchivo();
+                        }
+                        break;
+
+                    //La tarea es continuar con el envío, el transmisor sabe que se confirmó el archivo
+                    case "1":
+                        MessageBox.Show("El receptor acepto el archivo");
+                        OnLlegoAprobacion();
+                        break;
+
+                    //El transmisor sabe que se no se debe aceptar el archivo
+                    case "0":
+                        MessageBox.Show("El receptor no acepto el archivo");
+                        break;
+
+                    //La tarea es crear en la recepción el archivo fileReception
+                    case "C":
+                        //Instancia los objects a utilizar en la recepción del archivo
+                        //y lo crea 
+                        string extensionConEspacios = ASCIIEncoding.UTF8.GetString(tramaRecibida, 12, 8);
+                        string extension = extensionConEspacios.Replace("@", "");
+                        int size = Int32.Parse(ASCIIEncoding.UTF8.GetString(tramaRecibida, 1, 9));
+                        int number = Int32.Parse(ASCIIEncoding.UTF8.GetString(tramaRecibida, 10, 2));
+                        OnLlegoCarpeta(size, number,extension);
+                        break;
+                    case "G":
+                    //La tarea es activar el hilo de envío de bytes del archivo 
+                        enviandoArchivo();
+                        break;
+                    //La tarea es enviar partes de bytes del archivo
+                    case "A":
+                        buildingFile();
+                        break;
+
+                    //La tarea es cerrar flujos del trasmisor.
+                    case "F":
+                        finalizarSendObject();
+                        break;
+
+                    //La tarea es identificar una trama sin una tarea.
+                    default:
+                        MessageBox.Show("TAREA NO RECONOCIDA");
+                        break;
+                }
+
+            }
         }
 
         protected virtual void OnLlegoMensaje(string ss)

@@ -62,3 +62,12 @@ C:\Users\jmostacero\Documents\VII CICLO\REDES Y COMUNICACIONES I\SEMANA10\Origin
 C:\Users\jmostacero\Documents\VII CICLO\REDES Y COMUNICACIONES I\SEMANA10\Original1 - copia\AppPorts\obj\Debug\AppPorts.pdb
 C:\Users\jmostacero\Documents\VII CICLO\REDES Y COMUNICACIONES I\SEMANA10\Original1 - copia\AppPorts\bin\Debug\AppPorts.exe
 C:\Users\jmostacero\Documents\VII CICLO\REDES Y COMUNICACIONES I\SEMANA10\Original1 - copia\AppPorts\bin\Debug\AppPorts.pdb
+C:\Users\jmostacero\Documents\VII CICLO\REDES Y COMUNICACIONES I\SEMANA10\ProyectCommunicationSerialPort\AppPorts\bin\Debug\AppPorts.exe
+C:\Users\jmostacero\Documents\VII CICLO\REDES Y COMUNICACIONES I\SEMANA10\ProyectCommunicationSerialPort\AppPorts\bin\Debug\AppPorts.pdb
+C:\Users\jmostacero\Documents\VII CICLO\REDES Y COMUNICACIONES I\SEMANA10\ProyectCommunicationSerialPort\AppPorts\obj\Debug\AppPorts.csproj.AssemblyReference.cache
+C:\Users\jmostacero\Documents\VII CICLO\REDES Y COMUNICACIONES I\SEMANA10\ProyectCommunicationSerialPort\AppPorts\obj\Debug\AppPorts.Form1.resources
+C:\Users\jmostacero\Documents\VII CICLO\REDES Y COMUNICACIONES I\SEMANA10\ProyectCommunicationSerialPort\AppPorts\obj\Debug\AppPorts.Properties.Resources.resources
+C:\Users\jmostacero\Documents\VII CICLO\REDES Y COMUNICACIONES I\SEMANA10\ProyectCommunicationSerialPort\AppPorts\obj\Debug\AppPorts.csproj.GenerateResource.cache
+C:\Users\jmostacero\Documents\VII CICLO\REDES Y COMUNICACIONES I\SEMANA10\ProyectCommunicationSerialPort\AppPorts\obj\Debug\AppPorts.csproj.CoreCompileInputs.cache
+C:\Users\jmostacero\Documents\VII CICLO\REDES Y COMUNICACIONES I\SEMANA10\ProyectCommunicationSerialPort\AppPorts\obj\Debug\AppPorts.exe
+C:\Users\jmostacero\Documents\VII CICLO\REDES Y COMUNICACIONES I\SEMANA10\ProyectCommunicationSerialPort\AppPorts\obj\Debug\AppPorts.pdb
