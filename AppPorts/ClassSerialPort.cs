@@ -1,5 +1,6 @@
 ﻿using AppPorts;
 using System;
+using System.Globalization;
 using System.IO;
 using System.IO.Ports;
 using System.Text;
@@ -208,6 +209,85 @@ namespace AppPort
 
         }
 
+        public void enviar_send(string msj)
+        {
+            try
+            {
+                mensajeEnviado = msj;
+                processSend = new Thread(enviandoMensaje);
+                processSend.Start();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error : " + ex);
+            }
+        }
+
+        private void enviandoMensaje()
+        {
+            try
+            {
+                int tamanio;
+                int tamanioTamanio;
+                string ceros;
+                tamanio = mensajeEnviado.Length;
+
+
+                if (tamanio > 1004)
+                {
+                    int parteEntera = tamanio / 1004;
+                    int residuo = tamanio - parteEntera * 1004;
+                    byte[] contenido;
+                    contenido = ASCIIEncoding.UTF8.GetBytes(mensajeEnviado);
+                    MessageBox.Show("TAM: "+contenido.Length.ToString()
+                        +"\r\nParte entera: "+parteEntera+
+                        "\r\nResiduo: "+residuo);
+                    tramaCabecera = ASCIIEncoding.UTF8.GetBytes("M1000000000000001024");
+
+                    for (int i = 0; i < parteEntera; i++)
+                    {
+                        serialPort.Write(tramaCabecera, 0, 20);
+                        serialPort.Write(contenido, i*1004, 1004);
+                    }
+
+                    ceros = "M0";
+                    tamanioTamanio = residuo.ToString().Length;
+                    for (int j = 0; j < 20 - 2 - tamanioTamanio; j++)
+                    {
+                        ceros = ceros + "0";
+                    }
+                    tramaCabecera = ASCIIEncoding.UTF8.GetBytes(ceros + residuo.ToString());
+
+                    serialPort.Write(tramaCabecera, 0, 20);
+                    serialPort.Write(contenido, parteEntera * 1004, residuo);
+                   
+                    serialPort.Write(arregloTramaRelleno,0,1024-20-residuo);
+                }
+                else
+                {
+                    ceros = "M0";
+                    tamanioTamanio = tamanio.ToString().Length;
+                    for (int j = 0; j < 20 - 2 - tamanioTamanio; j++)
+                    {
+                        ceros = ceros + "0";
+                    }
+                    tramaCabecera = ASCIIEncoding.UTF8.GetBytes(ceros + tamanio.ToString());
+
+                    arregloTramaEnvio = ASCIIEncoding.UTF8.GetBytes(mensajeEnviado);
+                    serialPort.Write(tramaCabecera, 0, 20);
+                    serialPort.Write(arregloTramaEnvio, 0, mensajeEnviado.Length);
+                    serialPort.Write(arregloTramaRelleno, 0, getReceivedBytesThreshold() - 20 - mensajeEnviado.Length);
+                    
+                }
+                ceros = "";
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+        }
+
         public void IniciadoEnvioArchivo(String name, String path)
         {
 
@@ -271,7 +351,7 @@ namespace AppPort
 
             tramaSendFile = new byte[1004];
             //tramaSendHeadboardFile = new byte[20];
-            tramaSendHeadboardFile = ASCIIEncoding.UTF8.GetBytes("AC0010000000000000000");
+            tramaSendHeadboardFile = ASCIIEncoding.UTF8.GetBytes("AC000000000000000000");
             int v = 0;
             while (fileSend.advance <= fileSend.size - 1004)
             {
@@ -307,44 +387,6 @@ namespace AppPort
 
         }
 
-        public void enviar_send(string msj)
-        {
-            try
-            {
-                mensajeEnviado = msj;
-                processSend = new Thread(enviandoMensaje);
-                processSend.Start();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error : " + ex);
-            }
-        }
-
-        private void enviandoMensaje()
-        {
-            try
-            {
-                int tamanio;
-                int tamanioTamanio;
-                string ceros = "M";
-                arregloTramaEnvio = ASCIIEncoding.UTF8.GetBytes(mensajeEnviado);//"hola jona"
-                tamanio = mensajeEnviado.Length;
-                tamanioTamanio = tamanio.ToString().Length;
-                for (int i = 0; i < 20 - 1 - tamanioTamanio; i++)
-                {
-                    ceros = ceros + "0";
-                }
-                tramaCabecera = ASCIIEncoding.UTF8.GetBytes(ceros + tamanio.ToString());
-                serialPort.Write(tramaCabecera, 0, 20);
-                serialPort.Write(arregloTramaEnvio, 0, mensajeEnviado.Length);
-                serialPort.Write(arregloTramaRelleno, 0, getReceivedBytesThreshold() - 20 - mensajeEnviado.Length);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString());
-            }
-        }
 
         private void buildingFile()
         {
@@ -393,11 +435,23 @@ namespace AppPort
                 {
                     //La tarea es la contrucción de un mensaje.
                     case "M":
-                        int longValRec = getReceivedBytesThreshold();
                         // Número de caracteres escritos
-                        int cantCaracter = Int32.Parse(ASCIIEncoding.UTF8.GetString(tramaRecibida, 1, 19));
-                        mensajeRecibido = ASCIIEncoding.UTF8.GetString(tramaRecibida, 20, cantCaracter);
-                        OnLlegoMensaje(mensajeRecibido);
+
+                        int cantCaracter = Int32.Parse(ASCIIEncoding.UTF8.GetString(tramaRecibida, 2, 18));
+                        string x = ASCIIEncoding.UTF8.GetString(tramaRecibida, 1, 1);
+                        if (x.Equals("1"))
+                        {
+                            byte[] bytes = new byte[cantCaracter];
+                            string msj = ASCIIEncoding.UTF8.GetString(tramaRecibida, 20, 1004);
+                            mensajeRecibido += msj;
+                        }
+                        else
+                        {
+                            mensajeRecibido+=mensajeRecibido = ASCIIEncoding.UTF8.GetString(tramaRecibida, 20, cantCaracter);
+                            OnLlegoMensaje(mensajeRecibido);
+                            mensajeRecibido = "";
+                        }
+                        
                         break;
                     
                     //La tarea es la pregunta de confirmación para acpetar o no el archivo

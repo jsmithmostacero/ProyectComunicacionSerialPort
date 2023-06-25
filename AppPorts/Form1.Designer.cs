@@ -316,6 +316,7 @@
             this.txtHistorial.Location = new System.Drawing.Point(30, 61);
             this.txtHistorial.Multiline = true;
             this.txtHistorial.Name = "txtHistorial";
+            this.txtHistorial.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.txtHistorial.Size = new System.Drawing.Size(203, 156);
             this.txtHistorial.TabIndex = 1;
             // 
